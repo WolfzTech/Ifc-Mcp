@@ -4,37 +4,53 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that 
 
 ---
 
-## Prerequisites
+## Installation
 
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) (fast Python package manager)
+### From PyPI (recommended)
+
+```bash
+pip install ifc-mcp
+# or with uv:
+uv tool install ifc-mcp
+```
+
+Claude Desktop config (no path needed):
+```json
+{
+  "mcpServers": {
+    "ifc": {
+      "command": "uvx",
+      "args": ["ifc-mcp"]
+    }
+  }
+}
+```
+
+### To update
+
+```bash
+uv tool upgrade ifc-mcp
+```
+
+Or pin to a specific version:
+```json
+"args": ["ifc-mcp==0.2.0"]
+```
 
 ---
 
-## Setup
+## Development Setup
+
+Prerequisites: Python 3.11+, [uv](https://docs.astral.sh/uv/)
 
 ```bash
 git clone <repo>
 cd IfcMcp
 uv sync
-uv run python tests/create_fixture.py   # only needed if you delete the committed fixture
 uv run pytest                            # verify all tests pass
 ```
 
----
-
-## Running the Server
-
-```bash
-uv run python server.py
-```
-
----
-
-## Claude Desktop Config
-
-Paste the following into your `claude_desktop_config.json` file (replace `/absolute/path/to/IfcMcp` with the actual path on your machine):
-
+Claude Desktop config for local dev:
 ```json
 {
   "mcpServers": {

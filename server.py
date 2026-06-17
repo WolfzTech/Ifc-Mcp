@@ -107,5 +107,9 @@ def model_summary_resource(model_id: str) -> str:
     return get_summary(model_id)
 
 
-if __name__ == "__main__":
+def main():
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()
