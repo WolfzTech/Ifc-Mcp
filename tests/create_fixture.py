@@ -1,7 +1,5 @@
 """Run once to generate tests/fixtures/sample.ifc"""
-import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import ifcopenshell
 import ifcopenshell.api
@@ -43,6 +41,14 @@ def create_sample_ifc(output_path: str):
         "Width": 0.2,
     })
 
+    pset_door = ifcopenshell.api.run("pset.add_pset", f, product=door1, name="Pset_DoorCommon")
+    ifcopenshell.api.run("pset.edit_pset", f, pset=pset_door, properties={
+        "IsExternal": True,
+        "FireRating": "REI30",
+    })
+
+    # This file is committed to source control as a static test fixture.
+    # Regenerate by running: uv run python tests/create_fixture.py
     f.write(output_path)
     print(f"Written: {output_path}")
 
