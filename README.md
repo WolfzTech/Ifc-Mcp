@@ -17,7 +17,7 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that 
 git clone <repo>
 cd IfcMcp
 uv sync
-uv run python tests/create_fixture.py   # generates tests/fixtures/sample.ifc
+uv run python tests/create_fixture.py   # only needed if you delete the committed fixture
 uv run pytest                            # verify all tests pass
 ```
 
@@ -47,9 +47,13 @@ Paste the following into your `claude_desktop_config.json` file (replace `/absol
 }
 ```
 
+On Windows, use double backslashes: `"cwd": "C:\\Users\\...\\IfcMcp"`
+
 ---
 
 ## Tools Reference
+
+Every tool (except `list_loaded_models`) requires a `model_id` — the value returned by `load_ifc_file`.
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
@@ -83,11 +87,13 @@ This resource is computed at load time and contains the project name, IFC schema
 
 ## Error Responses
 
-All tools return structured error objects — they never raise raw exceptions. Possible error codes:
+All tools return structured error objects. Common codes:
 
 ```json
 {"error": "element_not_found", "details": "..."}
 {"error": "model_not_loaded", "details": "..."}
 {"error": "geometry_unavailable", "details": "..."}
 {"error": "file_not_found", "details": "..."}
+{"error": "load_failed", "details": "..."}
+{"error": "query_failed", "details": "..."}
 ```
