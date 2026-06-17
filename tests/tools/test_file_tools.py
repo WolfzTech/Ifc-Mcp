@@ -1,10 +1,12 @@
 import ifc_manager
 from tools.file_tools import tool_load_ifc_file, tool_list_loaded_models, tool_unload_ifc_file
+from resources.model_summary import _summaries
 
 
 def setup_function():
     ifc_manager._registry.clear()
     ifc_manager._metadata.clear()
+    _summaries.clear()
 
 
 def test_load_returns_model_info(sample_ifc_path):
@@ -38,4 +40,4 @@ def test_unload_model(sample_ifc_path):
 
 def test_unload_unknown_model():
     result = tool_unload_ifc_file("unknown_id")
-    assert result["success"] is False
+    assert result["error"] == "model_not_loaded"

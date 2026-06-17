@@ -1,11 +1,13 @@
 import ifc_manager
 from tools.file_tools import tool_load_ifc_file
 from tools.spatial_tools import tool_get_spatial_structure, tool_get_element_containment
+from resources.model_summary import _summaries
 
 
 def setup_function():
     ifc_manager._registry.clear()
     ifc_manager._metadata.clear()
+    _summaries.clear()
 
 
 def test_get_spatial_structure(sample_ifc_path):
@@ -34,8 +36,11 @@ def test_get_element_containment(sample_ifc_path):
     wall = model.by_type("IfcWall")[0]
     result = tool_get_element_containment(model_id, wall.GlobalId)
     assert "error" not in result
-    assert "IfcBuildingStorey" in result
-    assert result["IfcBuildingStorey"]["name"] == "Ground Floor"
+    assert "containment_chain" in result
+    chain = result["containment_chain"]
+    storey = next((c for c in chain if c["type"] == "IfcBuildingStorey"), None)
+    assert storey is not None
+    assert storey["name"] == "Ground Floor"
 
 
 def test_get_element_containment_invalid_guid(sample_ifc_path):

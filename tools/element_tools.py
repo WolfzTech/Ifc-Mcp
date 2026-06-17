@@ -50,6 +50,8 @@ def tool_search_elements(
     limit: int = 100,
     offset: int = 0,
 ) -> dict:
+    if property_value is not None and property_name is None:
+        return {"error": "invalid_filter", "details": "property_value requires property_name to be set"}
     try:
         model = get_model(model_id)
         base_type = ifc_type if ifc_type else "IfcElement"
@@ -71,7 +73,7 @@ def tool_search_elements(
                     target = {pset_name: psets[pset_name]} if pset_name else psets
                     found = any(
                         property_name in props
-                        and (property_value is None or str(props[property_name]) == property_value)
+                        and (property_value is None or str(props[property_name]).lower() == str(property_value).lower())
                         for props in target.values()
                     )
                     if not found:

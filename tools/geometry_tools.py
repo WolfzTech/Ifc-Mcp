@@ -6,22 +6,22 @@ from ifc_manager import get_model
 def tool_get_model_statistics(model_id: str) -> dict:
     try:
         model = get_model(model_id)
-        elements = model.by_type("IfcElement")
-        counts = Counter(e.is_a() for e in elements)
-        projects = model.by_type("IfcProject")
-        storeys = model.by_type("IfcBuildingStorey")
-        return {
-            "project_name": projects[0].Name if projects else None,
-            "schema": model.schema,
-            "total_elements": len(elements),
-            "element_counts": dict(counts),
-            "storey_count": len(storeys),
-            "storey_names": [getattr(s, "Name", None) for s in storeys],
-        }
     except KeyError as e:
         return {"error": "model_not_loaded", "details": str(e)}
-    except Exception as e:
-        return {"error": "query_failed", "details": str(e)}
+    counts = Counter(e.is_a() for e in model.by_type("IfcElement"))
+    projects = model.by_type("IfcProject")
+    project_name = projects[0].Name if projects else "Unknown"
+    storeys = model.by_type("IfcBuildingStorey")
+    storey_names = [s.Name for s in storeys]
+    return {
+        "model_id": model_id,
+        "project_name": project_name,
+        "schema": model.schema,
+        "total_elements": sum(counts.values()),
+        "element_counts": dict(counts.most_common(20)),
+        "storey_count": len(storeys),
+        "storey_names": storey_names,
+    }
 
 
 def tool_get_bounding_box(model_id: str, global_id: str) -> dict:
@@ -36,6 +36,7 @@ def tool_get_bounding_box(model_id: str, global_id: str) -> dict:
     if not element:
         return {"error": "element_not_found", "details": f"No element with GlobalId '{global_id}'"}
     settings = ifcopenshell.geom.settings()
+    settings.set("use-world-coords", True)
     try:
         shape = ifcopenshell.geom.create_shape(settings, element)
     except Exception:

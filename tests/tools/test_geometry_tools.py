@@ -1,11 +1,13 @@
 import ifc_manager
 from tools.file_tools import tool_load_ifc_file
 from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box
+from resources.model_summary import _summaries
 
 
 def setup_function():
     ifc_manager._registry.clear()
     ifc_manager._metadata.clear()
+    _summaries.clear()
 
 
 def test_get_model_statistics(sample_ifc_path):

@@ -10,6 +10,8 @@ def load_model(path: str) -> str:
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(f"Path '{path}' does not exist")
+    if p.suffix.lower() != ".ifc":
+        raise ValueError(f"Expected an .ifc file, got '{p.suffix}'")
     model_id = _make_model_id(p)
     if model_id not in _registry:
         _registry[model_id] = ifcopenshell.open(str(p))
@@ -36,6 +38,8 @@ def list_models() -> list[dict]:
 
 
 def _make_model_id(path: Path) -> str:
+    h = hashlib.md5()
     with open(path, "rb") as f:
-        content_hash = hashlib.md5(f.read(4096)).hexdigest()[:8]
-    return f"{path.stem}_{content_hash}"
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return f"{path.stem}_{h.hexdigest()[:12]}"

@@ -11,7 +11,13 @@ def compute_and_store_summary(model_id: str) -> None:
 
 
 def get_summary(model_id: str) -> str:
-    return _summaries.get(model_id, f"Model '{model_id}' not loaded.")
+    if model_id not in _summaries:
+        raise KeyError(f"Model '{model_id}' not loaded. Call load_ifc_file first.")
+    return _summaries[model_id]
+
+
+def has_summary(model_id: str) -> bool:
+    return model_id in _summaries
 
 
 def remove_summary(model_id: str) -> None:
