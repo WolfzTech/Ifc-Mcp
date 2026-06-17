@@ -1,3 +1,5 @@
+"""IFC MCP server — registers all tools and the model summary resource."""
+
 from mcp.server.fastmcp import FastMCP
 
 from tools.file_tools import tool_load_ifc_file, tool_list_loaded_models, tool_unload_ifc_file
@@ -36,7 +38,7 @@ def get_spatial_structure(model_id: str) -> dict:
 
 @mcp.tool()
 def get_element_containment(model_id: str, global_id: str) -> dict:
-    """Get which storey/building/site contains the given element."""
+    """Get the spatial containment chain for an element (Space > Storey > Building > Site)."""
     return tool_get_element_containment(model_id, global_id)
 
 
@@ -63,7 +65,7 @@ def search_elements(
     limit: int = 100,
     offset: int = 0,
 ) -> dict:
-    """Search elements with optional filters: IFC type, name substring, property set name/value."""
+    """Search elements with optional filters: IFC type, name substring, pset_name (must own this pset), property_name/property_value (property within that pset or any pset). Supports pagination via limit/offset."""
     return tool_search_elements(
         model_id, ifc_type, name_contains, pset_name, property_name, property_value, limit, offset
     )
@@ -83,7 +85,7 @@ def get_quantities(model_id: str, global_id: str) -> dict:
 
 @mcp.tool()
 def get_material(model_id: str, global_id: str) -> dict:
-    """Get material information for an element."""
+    """Get material information for an element. Returns {name, layers, category} — layers is a list of {name, thickness} for layered assemblies, or None for simple materials."""
     return tool_get_material(model_id, global_id)
 
 
