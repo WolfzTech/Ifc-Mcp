@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/bimlogiq/ifc-mcp"
+Repository = "https://github.com/WolfzTech/Ifc-Mcp"
 
 [project.scripts]
 ifc-mcp = "server:main"
