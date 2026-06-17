@@ -82,6 +82,7 @@ def tool_search_elements(
         total = len(candidates)
         page = candidates[offset: offset + limit]
         return {
+            "ifc_type": base_type,
             "total": total,
             "limit": limit,
             "offset": offset,

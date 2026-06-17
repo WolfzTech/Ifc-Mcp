@@ -61,3 +61,15 @@ def test_search_by_name_contains(sample_ifc_path):
     result = tool_search_elements(model_id, name_contains="Wall 001")
     assert result["total"] == 1
     assert result["items"][0]["name"] == "Wall 001"
+
+
+def test_search_by_property_value(sample_ifc_path):
+    model_id = tool_load_ifc_file(sample_ifc_path)["model_id"]
+    result = tool_search_elements(
+        model_id,
+        pset_name="Pset_WallCommon",
+        property_name="FireRating",
+        property_value="REI60",
+    )
+    assert result["total"] == 1
+    assert result["items"][0]["name"] == "Wall 001"
