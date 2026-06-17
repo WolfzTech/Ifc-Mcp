@@ -25,6 +25,9 @@ def create_sample_ifc(output_path: str):
     wall2 = ifcopenshell.api.run("root.create_entity", f, ifc_class="IfcWall", name="Wall 002")
     door1 = ifcopenshell.api.run("root.create_entity", f, ifc_class="IfcDoor", name="Door 001")
 
+    # Add placement to Wall 001 so get_element_placement can be tested
+    ifcopenshell.api.run("geometry.edit_object_placement", f, product=wall1)
+
     # In IfcOpenShell 0.8.x, spatial.assign_container uses products= (list), not product=
     ifcopenshell.api.run("spatial.assign_container", f, relating_structure=storey_gf, products=[wall1, wall2, door1])
 

@@ -6,7 +6,7 @@ from tools.file_tools import tool_load_ifc_file, tool_list_loaded_models, tool_u
 from tools.spatial_tools import tool_get_spatial_structure, tool_get_element_containment
 from tools.element_tools import tool_get_elements_by_type, tool_get_element_by_id, tool_search_elements
 from tools.property_tools import tool_get_property_sets, tool_get_quantities, tool_get_material
-from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box
+from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box, tool_get_element_placement
 from resources.model_summary import get_summary
 
 mcp = FastMCP("ifc-mcp")
@@ -99,6 +99,12 @@ def get_model_statistics(model_id: str) -> dict:
 def get_bounding_box(model_id: str, global_id: str) -> dict:
     """Get the bounding box (min/max XYZ and dimensions) of an element in project coordinates."""
     return tool_get_bounding_box(model_id, global_id)
+
+
+@mcp.tool()
+def get_element_placement(model_id: str, global_id: str) -> dict:
+    """Get the world-space placement of an element: insertion point (XYZ) and orientation axes (X/Y/Z unit vectors). Useful for position, rotation, and aim direction of elements like luminaires."""
+    return tool_get_element_placement(model_id, global_id)
 
 
 @mcp.resource("ifc://model/{model_id}/summary")

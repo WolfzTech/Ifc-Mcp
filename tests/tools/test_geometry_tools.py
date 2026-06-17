@@ -1,6 +1,7 @@
 import ifc_manager
 from tools.file_tools import tool_load_ifc_file
-from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box
+from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box, tool_get_element_placement
+from tools.element_tools import tool_get_elements_by_type
 from resources.model_summary import _summaries
 
 
@@ -38,4 +39,27 @@ def test_get_bounding_box_no_geometry(sample_ifc_path):
 def test_get_bounding_box_invalid_id(sample_ifc_path):
     model_id = tool_load_ifc_file(sample_ifc_path)["model_id"]
     result = tool_get_bounding_box(model_id, "NONEXISTENT00000")
+    assert result["error"] == "element_not_found"
+
+
+def test_get_element_placement(sample_ifc_path):
+    model_id = tool_load_ifc_file(sample_ifc_path)["model_id"]
+    walls = tool_get_elements_by_type(model_id, "IfcWall", limit=1)
+    global_id = walls["items"][0]["global_id"]
+    result = tool_get_element_placement(model_id, global_id)
+    assert "error" not in result
+    assert "location" in result
+    assert all(k in result["location"] for k in ("x", "y", "z"))
+    assert "x_axis" in result and "y_axis" in result and "z_axis" in result
+    # Each axis should be a unit vector (length ≈ 1.0)
+    import math
+    for axis_key in ("x_axis", "y_axis", "z_axis"):
+        ax = result[axis_key]
+        length = math.sqrt(ax["x"]**2 + ax["y"]**2 + ax["z"]**2)
+        assert abs(length - 1.0) < 0.001, f"{axis_key} is not a unit vector: length={length}"
+
+
+def test_get_element_placement_invalid_id(sample_ifc_path):
+    model_id = tool_load_ifc_file(sample_ifc_path)["model_id"]
+    result = tool_get_element_placement(model_id, "INVALID_GUID")
     assert result["error"] == "element_not_found"

@@ -1,5 +1,6 @@
 from collections import Counter
 import ifcopenshell.geom
+import ifcopenshell.util.placement
 from ifc_manager import get_model
 
 
@@ -56,4 +57,28 @@ def tool_get_bounding_box(model_id: str, global_id: str) -> dict:
             "depth": max(ys) - min(ys),
             "height": max(zs) - min(zs),
         },
+    }
+
+
+def tool_get_element_placement(model_id: str, global_id: str) -> dict:
+    try:
+        model = get_model(model_id)
+    except KeyError as e:
+        return {"error": "model_not_loaded", "details": str(e)}
+    try:
+        element = model.by_guid(global_id)
+    except RuntimeError:
+        element = None
+    if not element:
+        return {"error": "element_not_found", "details": f"No element with GlobalId '{global_id}'"}
+    if not getattr(element, "ObjectPlacement", None):
+        return {"error": "placement_unavailable", "details": "Element has no ObjectPlacement"}
+    m = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
+    # m is a 4x4 numpy array; columns are X, Y, Z axes; last column is translation
+    return {
+        "global_id": global_id,
+        "location": {"x": float(m[0, 3]), "y": float(m[1, 3]), "z": float(m[2, 3])},
+        "x_axis": {"x": float(m[0, 0]), "y": float(m[1, 0]), "z": float(m[2, 0])},
+        "y_axis": {"x": float(m[0, 1]), "y": float(m[1, 1]), "z": float(m[2, 1])},
+        "z_axis": {"x": float(m[0, 2]), "y": float(m[1, 2]), "z": float(m[2, 2])},
     }
