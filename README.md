@@ -58,7 +58,13 @@ Add the tools to your `~/.claude/settings.json` so Claude Code never asks for co
       "mcp__ifc__get_material",
       "mcp__ifc__get_model_statistics",
       "mcp__ifc__get_bounding_box",
-      "mcp__ifc__get_element_placement"
+      "mcp__ifc__get_element_placement",
+      "mcp__ifc__get_element_local_bbox",
+      "mcp__ifc__get_element_body_mapping",
+      "mcp__ifc__get_property_sets_detail",
+      "mcp__ifc__get_element_by_label",
+      "mcp__ifc__get_representation",
+      "mcp__ifc__get_elements_batch"
     ]
   }
 }
@@ -104,15 +110,22 @@ Every tool (except `list_loaded_models`) requires a `model_id` — the value ret
 | `list_loaded_models` | — | List all models in memory |
 | `unload_ifc_file` | `model_id` | Free a loaded model |
 | `get_spatial_structure` | `model_id` | Full spatial hierarchy (Project→Site→Building→Storey→Space) |
-| `get_element_containment` | `model_id`, `global_id` | Spatial containment chain for an element |
+| `get_element_containment` | `model_id`, `global_id` | Full containment chain up to Site |
 | `get_elements_by_type` | `model_id`, `ifc_type`, `limit`, `offset` | Paginated list by IFC type |
-| `get_element_by_id` | `model_id`, `global_id` | Full element details |
+| `get_element_by_id` | `model_id`, `global_id` | Full element details (includes `entity_label`, `type_global_id`) |
+| `get_element_by_label` | `model_id`, `entity_label` | Look up element by integer STEP label (`#NNN`) |
+| `get_elements_batch` | `model_id`, `global_ids`, `include` | Batch query; `include`: `entity_label`, `placement`, `property_sets`, `local_bbox` |
 | `search_elements` | `model_id`, filters..., `limit`, `offset` | Filter elements by type/name/pset/property |
 | `get_property_sets` | `model_id`, `global_id` | All Psets for an element |
+| `get_property_sets_detail` | `model_id`, `global_id` | Psets split by instance-level vs type-level |
 | `get_quantities` | `model_id`, `global_id` | All quantity sets for an element |
 | `get_material` | `model_id`, `global_id` | Material info (name, layers, category) |
 | `get_model_statistics` | `model_id` | Element counts by type, storey names, schema |
-| `get_bounding_box` | `model_id`, `global_id` | Min/max XYZ bounding box in project coordinates |
+| `get_bounding_box` | `model_id`, `global_id` | Min/max XYZ bounding box in world coordinates |
+| `get_element_placement` | `model_id`, `global_id` | `object_placement` + `world_transform` + determinant + body mapping flag |
+| `get_element_local_bbox` | `model_id`, `global_id` | Bounding box in element's local coordinate frame |
+| `get_element_body_mapping` | `model_id`, `global_id` | Body mapping matrix, world transform, mirroring detection |
+| `get_representation` | `model_id`, `global_id` | Representation structure without tessellating geometry |
 
 ---
 
