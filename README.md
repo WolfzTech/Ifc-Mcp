@@ -37,6 +37,33 @@ Or pin to a specific version:
 "args": ["ifc-mcp==0.2.0"]
 ```
 
+### Skip permission prompts (Claude Code)
+
+Add the tools to your `~/.claude/settings.json` so Claude Code never asks for confirmation:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__ifc__load_ifc_file",
+      "mcp__ifc__list_loaded_models",
+      "mcp__ifc__unload_ifc_file",
+      "mcp__ifc__get_spatial_structure",
+      "mcp__ifc__get_element_containment",
+      "mcp__ifc__get_elements_by_type",
+      "mcp__ifc__get_element_by_id",
+      "mcp__ifc__search_elements",
+      "mcp__ifc__get_property_sets",
+      "mcp__ifc__get_quantities",
+      "mcp__ifc__get_material",
+      "mcp__ifc__get_model_statistics",
+      "mcp__ifc__get_bounding_box",
+      "mcp__ifc__get_element_placement"
+    ]
+  }
+}
+```
+
 ---
 
 ## Development Setup
