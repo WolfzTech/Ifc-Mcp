@@ -19,6 +19,38 @@ def tool_get_property_sets(model_id: str, global_id: str) -> dict:
         return {"error": "query_failed", "details": str(e)}
 
 
+def tool_get_property_sets_detail(model_id: str, global_id: str) -> dict:
+    try:
+        model = get_model(model_id)
+    except KeyError as e:
+        return {"error": "model_not_loaded", "details": str(e)}
+    try:
+        element = model.by_guid(global_id)
+    except RuntimeError:
+        element = None
+    if not element:
+        return {"error": "element_not_found", "details": f"No element with GlobalId '{global_id}'"}
+
+    instance_psets = ifcopenshell.util.element.get_psets(element, psets_only=True)
+    # Strip internal 'id' keys
+    for pset in instance_psets.values():
+        pset.pop("id", None)
+
+    type_psets = {}
+    type_rels = getattr(element, "IsTypedBy", [])
+    if type_rels:
+        type_obj = type_rels[0].RelatingType
+        type_psets = ifcopenshell.util.element.get_psets(type_obj, psets_only=True)
+        for pset in type_psets.values():
+            pset.pop("id", None)
+
+    return {
+        "global_id": global_id,
+        "instance": instance_psets,
+        "type": type_psets,
+    }
+
+
 def tool_get_quantities(model_id: str, global_id: str) -> dict:
     try:
         model = get_model(model_id)

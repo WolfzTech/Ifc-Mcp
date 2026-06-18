@@ -75,3 +75,14 @@ def test_search_by_property_value(sample_ifc_path):
     )
     assert result["total"] == 1
     assert result["items"][0]["name"] == "Wall 001"
+
+
+def test_get_element_by_id_includes_entity_label_and_type(sample_model_id):
+    walls = tool_get_elements_by_type(sample_model_id, "IfcWall", limit=1)
+    gid = walls["items"][0]["global_id"]
+    result = tool_get_element_by_id(sample_model_id, gid)
+    assert "error" not in result
+    assert isinstance(result["entity_label"], int)
+    assert result["entity_label"] > 0
+    assert "type_global_id" in result  # may be None if no type assigned
+    assert isinstance(result["representation_types"], list)

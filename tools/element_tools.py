@@ -35,7 +35,26 @@ def tool_get_element_by_id(model_id: str, global_id: str) -> dict:
     if not element:
         return {"error": "element_not_found", "details": f"No element with GlobalId '{global_id}'"}
     try:
-        return _to_dict(element)
+        type_rels = getattr(element, "IsTypedBy", [])
+        type_global_id = type_rels[0].RelatingType.GlobalId if type_rels else None
+
+        rep_types = []
+        if getattr(element, "Representation", None):
+            for rep in element.Representation.Representations:
+                for item in rep.Items:
+                    t = item.is_a()
+                    if t not in rep_types:
+                        rep_types.append(t)
+
+        return {
+            "global_id": element.GlobalId,
+            "entity_label": element.id(),
+            "name": element.Name,
+            "type": element.is_a(),
+            "description": element.Description,
+            "type_global_id": type_global_id,
+            "representation_types": rep_types,
+        }
     except Exception as e:
         return {"error": "query_failed", "details": str(e)}
 

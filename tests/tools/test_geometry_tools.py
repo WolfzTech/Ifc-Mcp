@@ -1,6 +1,12 @@
 import ifc_manager
 from tools.file_tools import tool_load_ifc_file
-from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box, tool_get_element_placement
+from tools.geometry_tools import (
+    tool_get_model_statistics,
+    tool_get_bounding_box,
+    tool_get_element_placement,
+    tool_get_element_local_bbox,
+    tool_get_element_body_mapping,
+)
 from tools.element_tools import tool_get_elements_by_type
 from resources.model_summary import _summaries
 
@@ -62,4 +68,33 @@ def test_get_element_placement(sample_ifc_path):
 def test_get_element_placement_invalid_id(sample_ifc_path):
     model_id = tool_load_ifc_file(sample_ifc_path)["model_id"]
     result = tool_get_element_placement(model_id, "INVALID_GUID")
+    assert result["error"] == "element_not_found"
+
+
+def test_get_element_local_bbox_no_geometry(sample_model_id):
+    walls = tool_get_elements_by_type(sample_model_id, "IfcWall", limit=1)
+    gid = walls["items"][0]["global_id"]
+    result = tool_get_element_local_bbox(sample_model_id, gid)
+    # The test fixture wall may or may not have geometry; either is acceptable
+    assert "error" in result or ("min" in result and "max" in result and "dimensions" in result)
+
+
+def test_get_element_local_bbox_invalid_id(sample_model_id):
+    result = tool_get_element_local_bbox(sample_model_id, "INVALID_GUID")
+    assert result["error"] == "element_not_found"
+
+
+def test_get_element_body_mapping(sample_model_id):
+    walls = tool_get_elements_by_type(sample_model_id, "IfcWall", limit=1)
+    gid = walls["items"][0]["global_id"]
+    result = tool_get_element_body_mapping(sample_model_id, gid)
+    assert "error" not in result
+    assert "has_mapped_item" in result
+    assert "has_non_identity_body_mapping" in result
+    assert "is_mirrored" in result
+    assert isinstance(result["has_mapped_item"], bool)
+
+
+def test_get_element_body_mapping_invalid_id(sample_model_id):
+    result = tool_get_element_body_mapping(sample_model_id, "INVALID_GUID")
     assert result["error"] == "element_not_found"

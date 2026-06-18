@@ -1,6 +1,7 @@
 import ifc_manager
 from tools.file_tools import tool_load_ifc_file
-from tools.property_tools import tool_get_property_sets, tool_get_quantities, tool_get_material
+from tools.property_tools import tool_get_property_sets, tool_get_quantities, tool_get_material, tool_get_property_sets_detail
+from tools.element_tools import tool_get_elements_by_type
 from resources.model_summary import _summaries
 
 
@@ -61,4 +62,20 @@ def test_get_material_not_assigned(sample_ifc_path):
 def test_get_property_sets_invalid_id(sample_ifc_path):
     model_id = tool_load_ifc_file(sample_ifc_path)["model_id"]
     result = tool_get_property_sets(model_id, "NONEXISTENT00000")
+    assert result["error"] == "element_not_found"
+
+
+def test_get_property_sets_detail(sample_model_id):
+    walls = tool_get_elements_by_type(sample_model_id, "IfcWall", limit=1)
+    gid = walls["items"][0]["global_id"]
+    result = tool_get_property_sets_detail(sample_model_id, gid)
+    assert "error" not in result
+    assert "instance" in result
+    assert "type" in result
+    assert isinstance(result["instance"], dict)
+    assert isinstance(result["type"], dict)
+
+
+def test_get_property_sets_detail_invalid_id(sample_model_id):
+    result = tool_get_property_sets_detail(sample_model_id, "INVALID_GUID")
     assert result["error"] == "element_not_found"

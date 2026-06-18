@@ -5,8 +5,8 @@ from mcp.server.fastmcp import FastMCP
 from tools.file_tools import tool_load_ifc_file, tool_list_loaded_models, tool_unload_ifc_file
 from tools.spatial_tools import tool_get_spatial_structure, tool_get_element_containment
 from tools.element_tools import tool_get_elements_by_type, tool_get_element_by_id, tool_search_elements
-from tools.property_tools import tool_get_property_sets, tool_get_quantities, tool_get_material
-from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box, tool_get_element_placement
+from tools.property_tools import tool_get_property_sets, tool_get_quantities, tool_get_material, tool_get_property_sets_detail
+from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box, tool_get_element_placement, tool_get_element_local_bbox, tool_get_element_body_mapping
 from resources.model_summary import get_summary
 
 mcp = FastMCP("ifc-mcp")
@@ -105,6 +105,24 @@ def get_bounding_box(model_id: str, global_id: str) -> dict:
 def get_element_placement(model_id: str, global_id: str) -> dict:
     """Get the world-space placement of an element: insertion point (XYZ) and orientation axes (X/Y/Z unit vectors). Useful for position, rotation, and aim direction of elements like luminaires."""
     return tool_get_element_placement(model_id, global_id)
+
+
+@mcp.tool()
+def get_element_local_bbox(model_id: str, global_id: str) -> dict:
+    """Get the local-space bounding box of an element (no world transform applied). Returns min/max XYZ and dimensions in the element's own coordinate system. Use for mounting axis prediction and recessed fixture detection."""
+    return tool_get_element_local_bbox(model_id, global_id)
+
+
+@mcp.tool()
+def get_element_body_mapping(model_id: str, global_id: str) -> dict:
+    """Get the body mapping matrix for an element with IfcMappedItem geometry. Returns: has_mapped_item, body_mapping_matrix (4x4), world_transform (OPM × body mapping), world_transform_determinant, is_mirrored (det<0 means Y-negation needed). Essential for detecting baked rotations in luminaire imports."""
+    return tool_get_element_body_mapping(model_id, global_id)
+
+
+@mcp.tool()
+def get_property_sets_detail(model_id: str, global_id: str) -> dict:
+    """Get property sets split by source: instance-level psets vs type-level psets. Use to determine whether a property was overridden at instance level or inherited from the type."""
+    return tool_get_property_sets_detail(model_id, global_id)
 
 
 @mcp.resource("ifc://model/{model_id}/summary")
