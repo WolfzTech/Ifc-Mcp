@@ -4,6 +4,21 @@ from tools.property_tools import tool_get_property_sets
 from tools.geometry_tools import tool_get_element_placement, tool_get_element_local_bbox
 
 
+def _get_type_element(element):
+    """Return the relating type element for an instance.
+
+    IFC4 exposes IsTypedBy; IFC2X3 buries it inside IsDefinedBy filtered by
+    IfcRelDefinesByType. This helper handles both transparently.
+    """
+    type_rels = getattr(element, "IsTypedBy", [])
+    if type_rels:
+        return type_rels[0].RelatingType
+    for rel in getattr(element, "IsDefinedBy", []):
+        if rel.is_a("IfcRelDefinesByType"):
+            return rel.RelatingType
+    return None
+
+
 def tool_get_elements_by_type(
     model_id: str, ifc_type: str, limit: int = 100, offset: int = 0
 ) -> dict:
@@ -37,8 +52,8 @@ def tool_get_element_by_id(model_id: str, global_id: str) -> dict:
     if not element:
         return {"error": "element_not_found", "details": f"No element with GlobalId '{global_id}'"}
     try:
-        type_rels = getattr(element, "IsTypedBy", [])
-        type_global_id = type_rels[0].RelatingType.GlobalId if type_rels else None
+        type_obj = _get_type_element(element)
+        type_global_id = type_obj.GlobalId if type_obj else None
 
         rep_types = []
         if getattr(element, "Representation", None):
@@ -128,8 +143,8 @@ def tool_get_element_by_label(model_id: str, entity_label: int) -> dict:
         element = None
     if not element:
         return {"error": "element_not_found", "details": f"No element with entity label #{entity_label}"}
-    type_rels = getattr(element, "IsTypedBy", [])
-    type_global_id = type_rels[0].RelatingType.GlobalId if type_rels else None
+    type_obj = _get_type_element(element)
+    type_global_id = type_obj.GlobalId if type_obj else None
     rep_types = []
     if getattr(element, "Representation", None):
         for rep in element.Representation.Representations:

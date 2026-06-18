@@ -2,6 +2,17 @@ import ifcopenshell.util.element
 from ifc_manager import get_model
 
 
+def _get_type_element(element):
+    """Return the relating type element for an instance (IFC4 + IFC2X3 compatible)."""
+    type_rels = getattr(element, "IsTypedBy", [])
+    if type_rels:
+        return type_rels[0].RelatingType
+    for rel in getattr(element, "IsDefinedBy", []):
+        if rel.is_a("IfcRelDefinesByType"):
+            return rel.RelatingType
+    return None
+
+
 def tool_get_property_sets(model_id: str, global_id: str) -> dict:
     try:
         model = get_model(model_id)
@@ -39,9 +50,8 @@ def tool_get_property_sets_detail(model_id: str, global_id: str) -> dict:
         pset.pop("id", None)
 
     type_psets = {}
-    type_rels = getattr(element, "IsTypedBy", [])
-    if type_rels:
-        type_obj = type_rels[0].RelatingType
+    type_obj = _get_type_element(element)
+    if type_obj:
         type_psets = ifcopenshell.util.element.get_psets(type_obj, psets_only=True)
         for pset in type_psets.values():
             pset.pop("id", None)
