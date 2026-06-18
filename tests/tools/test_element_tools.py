@@ -1,6 +1,12 @@
 import ifc_manager
 from tools.file_tools import tool_load_ifc_file
-from tools.element_tools import tool_get_elements_by_type, tool_get_element_by_id, tool_search_elements
+from tools.element_tools import (
+    tool_get_elements_by_type,
+    tool_get_element_by_id,
+    tool_search_elements,
+    tool_get_element_by_label,
+    tool_get_elements_batch,
+)
 from resources.model_summary import _summaries
 
 
@@ -86,3 +92,32 @@ def test_get_element_by_id_includes_entity_label_and_type(sample_model_id):
     assert result["entity_label"] > 0
     assert "type_global_id" in result  # may be None if no type assigned
     assert isinstance(result["representation_types"], list)
+
+
+def test_get_element_by_label(sample_model_id):
+    walls = tool_get_elements_by_type(sample_model_id, "IfcWall", limit=1)
+    entity_label = walls["items"][0]["entity_label"]
+    result = tool_get_element_by_label(sample_model_id, entity_label)
+    assert "error" not in result
+    assert result["entity_label"] == entity_label
+    assert result["type"] == "IfcWall"
+
+
+def test_get_element_by_label_invalid(sample_model_id):
+    result = tool_get_element_by_label(sample_model_id, 999999)
+    assert result["error"] == "element_not_found"
+
+
+def test_get_elements_batch(sample_model_id):
+    walls = tool_get_elements_by_type(sample_model_id, "IfcWall")
+    global_ids = [w["global_id"] for w in walls["items"][:2]]
+    result = tool_get_elements_batch(sample_model_id, global_ids, include=["entity_label"])
+    assert "error" not in result
+    assert result["count"] == 2
+    for item in result["items"]:
+        assert "entity_label" in item
+
+
+def test_get_elements_batch_invalid_id(sample_model_id):
+    result = tool_get_elements_batch(sample_model_id, ["INVALID_GUID"])
+    assert result["items"][0]["error"] == "element_not_found"

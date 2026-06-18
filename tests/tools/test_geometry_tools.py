@@ -6,6 +6,7 @@ from tools.geometry_tools import (
     tool_get_element_placement,
     tool_get_element_local_bbox,
     tool_get_element_body_mapping,
+    tool_get_representation,
 )
 from tools.element_tools import tool_get_elements_by_type
 from resources.model_summary import _summaries
@@ -54,15 +55,22 @@ def test_get_element_placement(sample_ifc_path):
     global_id = walls["items"][0]["global_id"]
     result = tool_get_element_placement(model_id, global_id)
     assert "error" not in result
-    assert "location" in result
-    assert all(k in result["location"] for k in ("x", "y", "z"))
-    assert "x_axis" in result and "y_axis" in result and "z_axis" in result
-    # Each axis should be a unit vector (length ≈ 1.0)
+    assert "object_placement" in result
+    assert "world_transform" in result
+    assert "world_transform_determinant" in result
+    assert "has_non_identity_body_mapping" in result
+    assert "entity_label" in result
+    assert isinstance(result["entity_label"], int)
+    # object_placement and world_transform should each have location and axis lists
+    for key in ("object_placement", "world_transform"):
+        block = result[key]
+        assert "location" in block and len(block["location"]) == 3
+        assert "x_axis" in block and len(block["x_axis"]) == 3
+        assert "y_axis" in block and len(block["y_axis"]) == 3
+        assert "z_axis" in block and len(block["z_axis"]) == 3
+    # determinant should be close to ±1.0 for a rigid transform
     import math
-    for axis_key in ("x_axis", "y_axis", "z_axis"):
-        ax = result[axis_key]
-        length = math.sqrt(ax["x"]**2 + ax["y"]**2 + ax["z"]**2)
-        assert abs(length - 1.0) < 0.001, f"{axis_key} is not a unit vector: length={length}"
+    assert abs(abs(result["world_transform_determinant"]) - 1.0) < 0.01
 
 
 def test_get_element_placement_invalid_id(sample_ifc_path):
@@ -97,4 +105,17 @@ def test_get_element_body_mapping(sample_model_id):
 
 def test_get_element_body_mapping_invalid_id(sample_model_id):
     result = tool_get_element_body_mapping(sample_model_id, "INVALID_GUID")
+    assert result["error"] == "element_not_found"
+
+
+def test_get_representation(sample_model_id):
+    walls = tool_get_elements_by_type(sample_model_id, "IfcWall", limit=1)
+    gid = walls["items"][0]["global_id"]
+    result = tool_get_representation(sample_model_id, gid)
+    # Wall may or may not have representation
+    assert "error" in result or "representations" in result
+
+
+def test_get_representation_invalid_id(sample_model_id):
+    result = tool_get_representation(sample_model_id, "INVALID_GUID")
     assert result["error"] == "element_not_found"

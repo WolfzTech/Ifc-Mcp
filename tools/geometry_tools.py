@@ -50,6 +50,7 @@ def tool_get_bounding_box(model_id: str, global_id: str) -> dict:
     zs = verts[2::3]
     return {
         "global_id": global_id,
+        "entity_label": element.id(),
         "min": {"x": min(xs), "y": min(ys), "z": min(zs)},
         "max": {"x": max(xs), "y": max(ys), "z": max(zs)},
         "dimensions": {
@@ -92,6 +93,46 @@ def tool_get_element_local_bbox(model_id: str, global_id: str) -> dict:
             "depth": max(ys) - min(ys),
             "height": max(zs) - min(zs),
         },
+    }
+
+
+def tool_get_representation(model_id: str, global_id: str) -> dict:
+    try:
+        model = get_model(model_id)
+    except KeyError as e:
+        return {"error": "model_not_loaded", "details": str(e)}
+    try:
+        element = model.by_guid(global_id)
+    except RuntimeError:
+        element = None
+    if not element:
+        return {"error": "element_not_found", "details": f"No element with GlobalId '{global_id}'"}
+    if not getattr(element, "Representation", None):
+        return {"error": "no_representation", "details": "Element has no geometry representation"}
+
+    import numpy as np
+    identity = np.eye(4)
+    representations = []
+    for rep in element.Representation.Representations:
+        items = []
+        for item in rep.Items:
+            item_info = {"type": item.is_a()}
+            if item.is_a("IfcMappedItem"):
+                target = item.MappingTarget
+                m = _cart_transform_to_matrix(target)
+                is_identity = bool(np.allclose(m, identity, atol=1e-6))
+                item_info["mapping_target_is_identity"] = is_identity
+                item_info["mapping_target_matrix"] = _mat_to_axes_dict(m) if not is_identity else None
+            items.append(item_info)
+        representations.append({
+            "type": rep.RepresentationType,
+            "identifier": rep.RepresentationIdentifier,
+            "items": items,
+        })
+    return {
+        "global_id": global_id,
+        "entity_label": element.id(),
+        "representations": representations,
     }
 
 
@@ -177,6 +218,15 @@ def _cart_transform_to_matrix(transform):
     return m
 
 
+def _mat_to_axes_dict(m):
+    return {
+        "location": [float(m[0, 3]), float(m[1, 3]), float(m[2, 3])],
+        "x_axis":   [float(m[0, 0]), float(m[1, 0]), float(m[2, 0])],
+        "y_axis":   [float(m[0, 1]), float(m[1, 1]), float(m[2, 1])],
+        "z_axis":   [float(m[0, 2]), float(m[1, 2]), float(m[2, 2])],
+    }
+
+
 def tool_get_element_placement(model_id: str, global_id: str) -> dict:
     try:
         model = get_model(model_id)
@@ -190,12 +240,38 @@ def tool_get_element_placement(model_id: str, global_id: str) -> dict:
         return {"error": "element_not_found", "details": f"No element with GlobalId '{global_id}'"}
     if not getattr(element, "ObjectPlacement", None):
         return {"error": "placement_unavailable", "details": "Element has no ObjectPlacement"}
-    m = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
-    # m is a 4x4 numpy array; columns are X, Y, Z axes; last column is translation
+
+    import numpy as np
+    import numpy.linalg as la
+
+    opm = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
+
+    # Find body mapping matrix from IfcMappedItem
+    body_matrix = None
+    if getattr(element, "Representation", None):
+        for rep in element.Representation.Representations:
+            for item in rep.Items:
+                if item.is_a("IfcMappedItem"):
+                    body_matrix = _cart_transform_to_matrix(item.MappingTarget)
+                    break
+            if body_matrix is not None:
+                break
+
+    identity = np.eye(4)
+    has_non_identity = body_matrix is not None and not np.allclose(body_matrix, identity, atol=1e-6)
+
+    if body_matrix is not None:
+        world = opm @ body_matrix
+    else:
+        world = opm
+
+    det = float(la.det(world[:3, :3]))
+
     return {
         "global_id": global_id,
-        "location": {"x": float(m[0, 3]), "y": float(m[1, 3]), "z": float(m[2, 3])},
-        "x_axis": {"x": float(m[0, 0]), "y": float(m[1, 0]), "z": float(m[2, 0])},
-        "y_axis": {"x": float(m[0, 1]), "y": float(m[1, 1]), "z": float(m[2, 1])},
-        "z_axis": {"x": float(m[0, 2]), "y": float(m[1, 2]), "z": float(m[2, 2])},
+        "entity_label": element.id(),
+        "object_placement": _mat_to_axes_dict(opm),
+        "world_transform": _mat_to_axes_dict(world),
+        "world_transform_determinant": det,
+        "has_non_identity_body_mapping": has_non_identity,
     }

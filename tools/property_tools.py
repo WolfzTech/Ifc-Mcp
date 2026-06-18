@@ -14,7 +14,9 @@ def tool_get_property_sets(model_id: str, global_id: str) -> dict:
     if not element:
         return {"error": "element_not_found", "details": f"No element with GlobalId '{global_id}'"}
     try:
-        return ifcopenshell.util.element.get_psets(element, psets_only=True)
+        psets = ifcopenshell.util.element.get_psets(element, psets_only=True)
+        result = {"global_id": global_id, "entity_label": element.id(), "psets": psets}
+        return result
     except Exception as e:
         return {"error": "query_failed", "details": str(e)}
 

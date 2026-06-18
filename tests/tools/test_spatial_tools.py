@@ -38,9 +38,14 @@ def test_get_element_containment(sample_ifc_path):
     assert "error" not in result
     assert "containment_chain" in result
     chain = result["containment_chain"]
+    types_in_chain = [c["type"] for c in chain]
+    # Wall must be in a storey
     storey = next((c for c in chain if c["type"] == "IfcBuildingStorey"), None)
     assert storey is not None
     assert storey["name"] == "Ground Floor"
+    # Full chain should also include Building and Site via Decomposes walk
+    assert "IfcBuilding" in types_in_chain
+    assert "IfcSite" in types_in_chain
 
 
 def test_get_element_containment_invalid_guid(sample_ifc_path):

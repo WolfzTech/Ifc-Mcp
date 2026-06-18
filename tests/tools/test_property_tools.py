@@ -17,9 +17,12 @@ def test_get_property_sets(sample_ifc_path):
     wall1 = next(w for w in model.by_type("IfcWall") if w.Name == "Wall 001")
     result = tool_get_property_sets(model_id, wall1.GlobalId)
     assert "error" not in result
-    assert "Pset_WallCommon" in result
-    assert result["Pset_WallCommon"]["FireRating"] == "REI60"
-    assert result["Pset_WallCommon"]["IsExternal"] is True
+    assert "entity_label" in result
+    assert isinstance(result["entity_label"], int)
+    assert "psets" in result
+    assert "Pset_WallCommon" in result["psets"]
+    assert result["psets"]["Pset_WallCommon"]["FireRating"] == "REI60"
+    assert result["psets"]["Pset_WallCommon"]["IsExternal"] is True
 
 
 def test_get_property_sets_no_psets(sample_ifc_path):
@@ -28,7 +31,7 @@ def test_get_property_sets_no_psets(sample_ifc_path):
     wall2 = next(w for w in model.by_type("IfcWall") if w.Name == "Wall 002")
     result = tool_get_property_sets(model_id, wall2.GlobalId)
     assert "error" not in result
-    assert result == {}
+    assert result["psets"] == {}
 
 
 def test_get_quantities(sample_ifc_path):

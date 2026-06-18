@@ -4,9 +4,9 @@ from mcp.server.fastmcp import FastMCP
 
 from tools.file_tools import tool_load_ifc_file, tool_list_loaded_models, tool_unload_ifc_file
 from tools.spatial_tools import tool_get_spatial_structure, tool_get_element_containment
-from tools.element_tools import tool_get_elements_by_type, tool_get_element_by_id, tool_search_elements
+from tools.element_tools import tool_get_elements_by_type, tool_get_element_by_id, tool_search_elements, tool_get_element_by_label, tool_get_elements_batch
 from tools.property_tools import tool_get_property_sets, tool_get_quantities, tool_get_material, tool_get_property_sets_detail
-from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box, tool_get_element_placement, tool_get_element_local_bbox, tool_get_element_body_mapping
+from tools.geometry_tools import tool_get_model_statistics, tool_get_bounding_box, tool_get_element_placement, tool_get_element_local_bbox, tool_get_element_body_mapping, tool_get_representation
 from resources.model_summary import get_summary
 
 mcp = FastMCP("ifc-mcp")
@@ -123,6 +123,24 @@ def get_element_body_mapping(model_id: str, global_id: str) -> dict:
 def get_property_sets_detail(model_id: str, global_id: str) -> dict:
     """Get property sets split by source: instance-level psets vs type-level psets. Use to determine whether a property was overridden at instance level or inherited from the type."""
     return tool_get_property_sets_detail(model_id, global_id)
+
+
+@mcp.tool()
+def get_element_by_label(model_id: str, entity_label: int) -> dict:
+    """Look up an element by its integer IFC entity label (#NNN from the STEP file). Returns the same response as get_element_by_id. Use to cross-reference import log output like '[OK] #16535 LightGraphix...' directly against MCP queries."""
+    return tool_get_element_by_label(model_id, entity_label)
+
+
+@mcp.tool()
+def get_representation(model_id: str, global_id: str) -> dict:
+    """Get the representation structure of an element without tessellating geometry. Returns representation type, identifier, and items with IfcMappedItem details (mapping_target_is_identity, mapping_target_matrix). Use to detect baked rotations before geometry extraction."""
+    return tool_get_representation(model_id, global_id)
+
+
+@mcp.tool()
+def get_elements_batch(model_id: str, global_ids: list, include: list | None = None) -> dict:
+    """Batch query for multiple elements by GlobalId. include options: 'entity_label', 'placement', 'property_sets', 'local_bbox'. Default: ['entity_label', 'placement']. Avoids individual round-trips for files with 200+ fixtures."""
+    return tool_get_elements_batch(model_id, global_ids, include)
 
 
 @mcp.resource("ifc://model/{model_id}/summary")
